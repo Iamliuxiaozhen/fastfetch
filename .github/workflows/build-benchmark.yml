@@ -25,6 +25,15 @@ jobs:
       - name: merge benchmark data
         run: jq -s 'add' benchmarks/*/benchmark.json > benchmark.json
 
+      - name: check gh-pages branch
+        id: gh-pages
+        run: |
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            echo "skip-fetch=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip-fetch=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: store benchmark result
         uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1.22.1
         with:
@@ -34,6 +43,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.sha }}
           auto-push: true
+          skip-fetch-gh-pages: ${{ steps.gh-pages.outputs.skip-fetch }}
           summary-always: true
           fail-on-alert: true
           benchmark-data-dir-path: dev/bench
